@@ -1,2 +1,16 @@
 # Node.js
 node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# SQLite
+db.sqlite3
+*.sqlite3
+
+# Django migrations
+backEnd/**/migrations/*.pyc
+backEnd/**/migrations/__pycache__/
