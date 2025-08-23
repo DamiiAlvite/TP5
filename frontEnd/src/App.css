@@ -1,0 +1,69 @@
+/* General */
+body, html, #root {
+  height: 100%;
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Sidebar */
+.sidebar {
+  border-right: 1px solid #ddd;
+  height: 100vh;
+  overflow-y: auto;
+  background-color: #f8f9fa;
+}
+
+.sidebar .search-results .list-group-item {
+  cursor: pointer;
+}
+
+/* Main content */
+.main-content {
+  overflow-y: auto;
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
+.card {
+  border-radius: 0.5rem;
+}
+
+.card-header {
+  font-weight: bold;
+}
+
+.card-body .badge {
+  font-size: 0.9rem;
+}
+
+/* Modal overlay */
+.modal.fade.show {
+  backdrop-filter: blur(2px);
+}
+
+/* Buttons */
+.btn-sm {
+  font-size: 0.85rem;
+}
+
+/* Search input */
+.input-group-text {
+  background-color: #ffffff;
+  border-right: 0;
+}
+
+.form-control {
+  border-left: 0;
+}
+
+/* Spinner */
+.spinner-border {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* Badges */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.4em 0.6em;
+}
