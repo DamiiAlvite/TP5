@@ -5,9 +5,19 @@ class TransformationCenter(models.Model):
         ('NIVEL', 'A nivel'),
         ('SUBT', 'Subterránea'),
         ('POZO', 'Pozo'),
+        ('PLAT', 'Plataforma'),
     ]
+    def save(self, *args, **kwargs):
+        if self.prefix == "PT":
+            self.type = "PLAT"
+        super().save(*args, **kwargs)
 
     cod = models.CharField(max_length=7, unique=True)
+    PREFIX_CHOICES = [
+        ("CT", "CT"),
+        ("PT", "PT"),
+    ]
+    prefix = models.CharField(max_length=2, choices=PREFIX_CHOICES, default="CT")
     name = models.CharField(max_length=100, blank=True, null=True)
     rem_ctrl = models.BooleanField(default=False)
     type = models.CharField(max_length=5, choices=TYPE_CHOICES)
@@ -28,7 +38,7 @@ class TransformationCenter(models.Model):
     )
 
     def __str__(self):
-        return f"CT {self.cod} ({self.name or ''})"
+        return f"{self.prefix} {self.cod} ({self.name or ''})"
 
 
 class Sectionalizer(models.Model):

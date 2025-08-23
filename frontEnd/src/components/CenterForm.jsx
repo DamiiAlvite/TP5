@@ -5,14 +5,14 @@ import { api } from "../services/api";
 function CenterForm({ show, handleClose }) {
 
   const [form, setForm] = useState({
-    cod: "",
-    name: "",
-    rem_ctrl: false,
-    type: "NIVEL",
-    location: "",
-    ctpt: "CT", // Nuevo campo para CT/PT
-    connected_centers: [],
-    connected_sectionalizers: [],
+  prefix: "CT",
+  cod: "",
+  name: "",
+  rem_ctrl: false,
+  type: "NIVEL",
+  location: "",
+  connected_centers: [],
+  connected_sectionalizers: [],
   });
   const [centers, setCenters] = useState([]);
   const [sectionalizers, setSectionalizers] = useState([]);
@@ -24,7 +24,13 @@ function CenterForm({ show, handleClose }) {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
+    if (name === "prefix" && value === "PT") {
+      setForm({ ...form, prefix: value, type: "PLAT" });
+    } else if (name === "prefix" && value === "CT") {
+      setForm({ ...form, prefix: value, type: "NIVEL" });
+    } else {
+      setForm({ ...form, [name]: type === "checkbox" ? checked : value });
+    }
   };
 
   const handleSelectChange = (e) => {
@@ -35,7 +41,7 @@ function CenterForm({ show, handleClose }) {
 
   const handleSubmit = async () => {
     // Crear el centro sin los asociados
-    const { connected_centers, connected_sectionalizers, ...baseData } = form;
+  const { connected_centers, connected_sectionalizers, ...baseData } = form;
     const res = await api.post("transformation-centers/", baseData);
     const id = res.data.id;
     // Actualizar los asociados si hay
@@ -58,7 +64,7 @@ function CenterForm({ show, handleClose }) {
         <Form>
           <Form.Group style={{ display: "flex", alignItems: "center" }}>
             <Form.Label style={{ marginRight: 10 }}>Tipo</Form.Label>
-            <Form.Select name="ctpt" value={form.ctpt} onChange={handleChange} style={{ width: 80, marginRight: 10 }}>
+            <Form.Select name="prefix" value={form.prefix} onChange={handleChange} style={{ width: 80, marginRight: 10 }}>
               <option value="CT">CT</option>
               <option value="PT">PT</option>
             </Form.Select>
@@ -82,17 +88,18 @@ function CenterForm({ show, handleClose }) {
           </Form.Group>
           <Form.Check
             type="checkbox"
-            label="Control Remoto"
+            label="Telemando"
             name="rem_ctrl"
             checked={form.rem_ctrl}
             onChange={handleChange}
           />
           <Form.Group>
             <Form.Label>Tipo de Instalación</Form.Label>
-            <Form.Select name="type" value={form.type} onChange={handleChange}>
+            <Form.Select name="type" value={form.type} onChange={handleChange} disabled={form.prefix === "PT"}>
               <option value="NIVEL">A nivel</option>
               <option value="SUBT">Subterránea</option>
               <option value="POZO">Pozo</option>
+              <option value="PLAT">Plataforma</option>
             </Form.Select>
           </Form.Group>
           <Form.Group>

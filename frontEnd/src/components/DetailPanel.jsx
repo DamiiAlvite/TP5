@@ -87,18 +87,35 @@ function DetailPanel({ selectedItem, setSelectedItem }) {
       <Card.Body>
         <Card.Title>
           {"cod" in selectedItem
-            ? `Centro de Transformación ${selectedItem.cod}`
+            ? `${selectedItem.prefix || "CT"} ${selectedItem.cod}`
             : `Seccionalizador ${selectedItem.prefix} ${selectedItem.num}`}
         </Card.Title>
         <Card.Text>
           {/* Mostrar campos normales excepto los asociados */}
           {Object.entries(selectedItem)
-            .filter(([key]) => key !== "connected_centers" && key !== "connected_sectionalizers" && key !== "source" && key !== "destination")
-            .map(([key, value]) => (
-              <div key={key}>
-                <strong>{key}:</strong> {String(value)}
-              </div>
-            ))}
+            .filter(([key]) => {
+              if ("cod" in selectedItem) {
+                // Si es centro, ocultar cod
+                return key !== "cod" && key !== "connected_centers" && key !== "connected_sectionalizers" && key !== "source" && key !== "destination" && key !== "prefix" && key !== "num";
+              }
+              return key !== "connected_centers" && key !== "connected_sectionalizers" && key !== "source" && key !== "destination" && key !== "prefix" && key !== "num";
+            })
+            .map(([key, value]) => {
+              let label = key;
+              if ("cod" in selectedItem) {
+                if (key === "name") label = "Nombre";
+                if (key === "rem_ctrl") label = "Telemando";
+                if (key === "type") label = "Tipo";
+                if (key === "location") label = "Ubicación";
+              } else {
+                if (key === "location") label = "Ubicación";
+              }
+              return (
+                <div key={key}>
+                  <strong>{label}:</strong> {String(value)}
+                </div>
+              );
+            })}
 
           {/* Mostrar fuente */}
           {typeof selectedItem.source !== "undefined" && (
