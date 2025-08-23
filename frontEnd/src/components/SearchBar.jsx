@@ -13,7 +13,8 @@ function SearchBar({ setSelectedItem }) {
         api.get("sectionalizers/"),
       ]).then(([centersRes, sectionRes]) => {
         const centers = centersRes.data.filter((c) =>
-          c.name?.toLowerCase().includes(query.toLowerCase())
+          (c.name?.toLowerCase().includes(query.toLowerCase()) ||
+           c.cod?.toLowerCase().includes(query.toLowerCase()))
         );
         const sectionals = sectionRes.data.filter((s) =>
           `${s.prefix} ${s.num}`
