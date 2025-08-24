@@ -1,5 +1,5 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from .models import TransformationCenter, Sectionalizer
 from .serializers import (
@@ -8,6 +8,17 @@ from .serializers import (
     SectionalizerSerializer,
     SectionalizerDetailSerializer
 )
+from django.contrib.contenttypes.models import ContentType
+
+# Endpoint para obtener los IDs de ContentType
+@api_view(['GET'])
+def contenttype_ids(request):
+    tc_ct = ContentType.objects.get(app_label='grid', model='transformationcenter')
+    sec_ct = ContentType.objects.get(app_label='grid', model='sectionalizer')
+    return Response({
+        'transformationcenter': tc_ct.id,
+        'sectionalizer': sec_ct.id
+    })
 
 class TransformationCenterViewSet(viewsets.ModelViewSet):
     queryset = TransformationCenter.objects.all()

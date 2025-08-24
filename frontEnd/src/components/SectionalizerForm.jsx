@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+
+import React, { useEffect, useState } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import { api } from "../services/api";
 
 function SectionalizerForm({ show, handleClose }) {
-
   const [form, setForm] = useState({
     prefix: "FV",
     num: "",
@@ -15,35 +15,64 @@ function SectionalizerForm({ show, handleClose }) {
   });
   const [centers, setCenters] = useState([]);
   const [sectionalizers, setSectionalizers] = useState([]);
+  const [contentTypeIds, setContentTypeIds] = useState({ transformationcenter: "", sectionalizer: "" });
 
-  React.useEffect(() => {
+  useEffect(() => {
     api.get("transformation-centers/").then(res => setCenters(res.data));
     api.get("sectionalizers/").then(res => setSectionalizers(res.data));
+    api.get("contenttype-ids/").then(res => setContentTypeIds(res.data));
   }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (e) => {
     const { name, options } = e.target;
     const values = Array.from(options).filter(o => o.selected).map(o => o.value);
-    setForm({ ...form, [name]: values });
+    setForm(prev => ({ ...prev, [name]: values }));
+  };
+
+  // Fuente y destino: guardamos el string "tipo:id" y lo convertimos en el submit
+  const handleSourceChange = (e) => {
+    setForm(prev => ({ ...prev, source: e.target.value }));
+  };
+  const handleDestinationChange = (e) => {
+    setForm(prev => ({ ...prev, destination: e.target.value }));
   };
 
   const handleSubmit = async () => {
-    // Crear el seccionalizador sin los asociados
-    const { connected_centers, connected_sectionalizers, source, destination, ...baseData } = form;
-    const res = await api.post("sectionalizers/", { ...baseData, source: source || null, destination: destination || null });
+    // Extraer tipo e id para source y destination
+    let source_content_type = null, source_object_id = null;
+    let destination_content_type = null, destination_object_id = null;
+    if (form.source) {
+      const [type, id] = form.source.split(":");
+      source_content_type = contentTypeIds[type];
+      source_object_id = id;
+    }
+    if (form.destination) {
+      const [type, id] = form.destination.split(":");
+      destination_content_type = contentTypeIds[type];
+      destination_object_id = id;
+    }
+    const payload = {
+      prefix: form.prefix,
+      num: form.num,
+      location: form.location,
+      connected_centers: form.connected_centers,
+      connected_sectionalizers: form.connected_sectionalizers,
+      source_content_type,
+      source_object_id,
+      destination_content_type,
+      destination_object_id,
+    };
+    const res = await api.post("sectionalizers/", payload);
     const id = res.data.id;
-    // Actualizar los asociados si hay
-    if (connected_centers.length > 0 || connected_sectionalizers.length > 0 || source || destination) {
+    if (form.connected_centers.length > 0 || form.connected_sectionalizers.length > 0) {
       await api.patch(`sectionalizers/${id}/`, {
-        connected_centers,
-        connected_sectionalizers,
-        source: source || null,
-        destination: destination || null,
+        connected_centers: form.connected_centers,
+        connected_sectionalizers: form.connected_sectionalizers,
       });
     }
     alert("Seccionalizador creado");
@@ -96,19 +125,33 @@ function SectionalizerForm({ show, handleClose }) {
           </Form.Group>
           <Form.Group>
             <Form.Label>Fuente</Form.Label>
-            <Form.Select name="source" value={form.source} onChange={handleChange}>
+            <Form.Select
+              name="source"
+              value={form.source}
+              onChange={handleSourceChange}
+            >
               <option value="">Sin fuente</option>
+              {centers.map(c => (
+                <option key={`center-${c.id}`} value={`transformationcenter:${c.id}`}>Centro: {c.cod} - {c.name}</option>
+              ))}
               {sectionalizers.map(s => (
-                <option key={s.id} value={s.id}>{s.prefix} {s.num}</option>
+                <option key={`sectionalizer-${s.id}`} value={`sectionalizer:${s.id}`}>Seccionalizador: {s.prefix} {s.num}</option>
               ))}
             </Form.Select>
           </Form.Group>
           <Form.Group>
             <Form.Label>Destino</Form.Label>
-            <Form.Select name="destination" value={form.destination} onChange={handleChange}>
+            <Form.Select
+              name="destination"
+              value={form.destination}
+              onChange={handleDestinationChange}
+            >
               <option value="">Sin destino</option>
               {centers.map(c => (
-                <option key={c.id} value={c.id}>{c.cod} - {c.name}</option>
+                <option key={`center-dest-${c.id}`} value={`transformationcenter:${c.id}`}>Centro: {c.cod} - {c.name}</option>
+              ))}
+              {sectionalizers.map(s => (
+                <option key={`sectionalizer-dest-${s.id}`} value={`sectionalizer:${s.id}`}>Seccionalizador: {s.prefix} {s.num}</option>
               ))}
             </Form.Select>
           </Form.Group>

@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 class TransformationCenter(models.Model):
     TYPE_CHOICES = [
@@ -58,8 +60,13 @@ class Sectionalizer(models.Model):
     prefix = models.CharField(max_length=4, choices=PREFIX_CHOICES)
     num = models.PositiveIntegerField()
     location = models.CharField(max_length=255, blank=True, null=True)
-    source = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True, related_name="salidas")
-    destination = models.ForeignKey(TransformationCenter, on_delete=models.SET_NULL, null=True, blank=True)
+    source_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    source_object_id = models.PositiveIntegerField(null=True, blank=True)
+    source = GenericForeignKey('source_content_type', 'source_object_id')
+
+    destination_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    destination_object_id = models.PositiveIntegerField(null=True, blank=True)
+    destination = GenericForeignKey('destination_content_type', 'destination_object_id')
 
     def __str__(self):
         return f"{self.prefix} {self.num}"

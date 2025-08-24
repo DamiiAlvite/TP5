@@ -5,28 +5,62 @@ import { api } from "../services/api";
 function DetailPanel({ selectedItem, setSelectedItem }) {
   const [sourceDetail, setSourceDetail] = React.useState(null);
   const [destinationDetail, setDestinationDetail] = React.useState(null);
+  const [contentTypeIds, setContentTypeIds] = React.useState({ transformationcenter: null, sectionalizer: null });
+
+  // Cargar los content type IDs al montar
+  React.useEffect(() => {
+    api.get("contenttype-ids/").then(res => setContentTypeIds(res.data));
+  }, []);
 
   React.useEffect(() => {
-    // Mostrar detalles de fuente y destino si son IDs
-    if (selectedItem && selectedItem.source) {
-      if (typeof selectedItem.source === "number" || typeof selectedItem.source === "string") {
-        api.get(`sectionalizers/${selectedItem.source}/`).then(res => setSourceDetail(res.data));
+    // Mostrar detalles de fuente y destino usando content_type y object_id
+    const fetchSource = async () => {
+      if (
+        selectedItem &&
+        selectedItem.source_content_type &&
+        selectedItem.source_object_id &&
+        contentTypeIds.sectionalizer &&
+        contentTypeIds.transformationcenter
+      ) {
+        if (parseInt(selectedItem.source_content_type) === parseInt(contentTypeIds.sectionalizer)) {
+          // Es seccionalizador
+          const res = await api.get(`sectionalizers/${selectedItem.source_object_id}/`);
+          setSourceDetail(res.data);
+        } else if (parseInt(selectedItem.source_content_type) === parseInt(contentTypeIds.transformationcenter)) {
+          // Es centro
+          const res = await api.get(`transformation-centers/${selectedItem.source_object_id}/`);
+          setSourceDetail(res.data);
+        } else {
+          setSourceDetail(null);
+        }
       } else {
-        setSourceDetail(selectedItem.source);
+        setSourceDetail(null);
       }
-    } else {
-      setSourceDetail(null);
-    }
-    if (selectedItem && selectedItem.destination) {
-      if (typeof selectedItem.destination === "number" || typeof selectedItem.destination === "string") {
-        api.get(`transformation-centers/${selectedItem.destination}/`).then(res => setDestinationDetail(res.data));
+    };
+    const fetchDestination = async () => {
+      if (
+        selectedItem &&
+        selectedItem.destination_content_type &&
+        selectedItem.destination_object_id &&
+        contentTypeIds.sectionalizer &&
+        contentTypeIds.transformationcenter
+      ) {
+        if (parseInt(selectedItem.destination_content_type) === parseInt(contentTypeIds.sectionalizer)) {
+          const res = await api.get(`sectionalizers/${selectedItem.destination_object_id}/`);
+          setDestinationDetail(res.data);
+        } else if (parseInt(selectedItem.destination_content_type) === parseInt(contentTypeIds.transformationcenter)) {
+          const res = await api.get(`transformation-centers/${selectedItem.destination_object_id}/`);
+          setDestinationDetail(res.data);
+        } else {
+          setDestinationDetail(null);
+        }
       } else {
-        setDestinationDetail(selectedItem.destination);
+        setDestinationDetail(null);
       }
-    } else {
-      setDestinationDetail(null);
-    }
-  }, [selectedItem]);
+    };
+    fetchSource();
+    fetchDestination();
+  }, [selectedItem, contentTypeIds]);
   const [connectedCenters, setConnectedCenters] = React.useState([]);
   const [connectedSectionalizers, setConnectedSectionalizers] = React.useState([]);
 
@@ -82,77 +116,76 @@ function DetailPanel({ selectedItem, setSelectedItem }) {
     return `${sec.prefix} ${sec.num}`;
   };
 
+  // Campos a mostrar en español y ocultar los internos
+  const camposMostrar = [
+    { key: "location", label: "Ubicación" },
+    { key: "name", label: "Nombre" },
+    { key: "rem_ctrl", label: "Telemando" },
+    { key: "type", label: "Tipo" },
+  ];
+
+  // Renderizado especial para seccionalizador
+  const isSectionalizer = !('cod' in selectedItem);
   return (
     <Card>
       <Card.Body>
         <Card.Title>
-          {"cod" in selectedItem
-            ? `${selectedItem.prefix || "CT"} ${selectedItem.cod}`
-            : `Seccionalizador ${selectedItem.prefix} ${selectedItem.num}`}
+          {isSectionalizer
+            ? `Seccionalizador ${selectedItem.prefix} ${selectedItem.num}`
+            : `${selectedItem.prefix || "CT"} ${selectedItem.cod}`}
         </Card.Title>
         <Card.Text>
-          {/* Mostrar campos normales excepto los asociados */}
-          {Object.entries(selectedItem)
-            .filter(([key]) => {
-              if ("cod" in selectedItem) {
-                // Si es centro, ocultar cod
-                return key !== "cod" && key !== "connected_centers" && key !== "connected_sectionalizers" && key !== "source" && key !== "destination" && key !== "prefix" && key !== "num";
-              }
-              return key !== "connected_centers" && key !== "connected_sectionalizers" && key !== "source" && key !== "destination" && key !== "prefix" && key !== "num";
-            })
-            .map(([key, value]) => {
-              let label = key;
-              if ("cod" in selectedItem) {
-                if (key === "name") label = "Nombre";
-                if (key === "rem_ctrl") label = "Telemando";
-                if (key === "type") label = "Tipo";
-                if (key === "location") label = "Ubicación";
-              } else {
-                if (key === "location") label = "Ubicación";
-              }
-              return (
-                <div key={key}>
-                  <strong>{label}:</strong> {String(value)}
+          {isSectionalizer ? (
+            <>
+              <div>
+                <strong>Ubicación:</strong> {selectedItem.location}
+              </div>
+              <div>
+                <strong>Fuente:</strong> {sourceDetail ? `${sourceDetail.prefix} ${sourceDetail.num || sourceDetail.cod}` : "Sin fuente"}
+              </div>
+              <div>
+                <strong>Destino:</strong> {destinationDetail ? `${destinationDetail.prefix} ${destinationDetail.num || destinationDetail.cod}` : "Sin destino"}
+              </div>
+            </>
+          ) : (
+            // ...existing code...
+            <>
+              {camposMostrar
+                .filter(c => selectedItem[c.key] !== undefined)
+                .map(c => (
+                  <div key={c.key}>
+                    <strong>{c.label}:</strong> {String(selectedItem[c.key])}
+                  </div>
+                ))}
+              <div>
+                <strong>Fuente:</strong> {sourceDetail ? `${sourceDetail.prefix} ${sourceDetail.num || sourceDetail.cod}` : "Sin fuente"}
+              </div>
+              <div>
+                <strong>Destino:</strong> {destinationDetail ? `${destinationDetail.prefix ? destinationDetail.prefix + " " : ""}${destinationDetail.num || destinationDetail.cod}` : "Sin destino"}
+              </div>
+              {/* Mostrar centros conectados */}
+              {connectedCenters.length > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  <strong>Centros conectados:</strong>
+                  <ul>
+                    {connectedCenters.map((c, idx) => (
+                      <li key={idx}>{renderCenter(c)}</li>
+                    ))}
+                  </ul>
                 </div>
-              );
-            })}
-
-          {/* Mostrar fuente */}
-          {typeof selectedItem.source !== "undefined" && (
-            <div>
-              <strong>Fuente:</strong> {sourceDetail ? `${sourceDetail.prefix} ${sourceDetail.num}` : selectedItem.source}
-            </div>
-          )}
-
-          {/* Mostrar destino */}
-          {typeof selectedItem.destination !== "undefined" && (
-            <div>
-              <strong>Destino:</strong> {destinationDetail ? `${destinationDetail.cod} - ${destinationDetail.name}` : selectedItem.destination}
-            </div>
-          )}
-
-          {/* Mostrar centros conectados */}
-          {connectedCenters.length > 0 && (
-            <div style={{ marginTop: 10 }}>
-              <strong>Centros conectados:</strong>
-              <ul>
-                {connectedCenters.map((c, idx) => (
-                  <li key={idx}>{renderCenter(c)}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Mostrar seccionalizadores conectados */}
-          {connectedSectionalizers.length > 0 && (
-            <div style={{ marginTop: 10 }}>
-              <strong>Seccionalizadores conectados:</strong>
-              <ul>
-                {connectedSectionalizers.map((s, idx) => (
-                  <li key={idx}>{renderSectionalizer(s)}</li>
-                ))}
-              </ul>
-            </div>
+              )}
+              {/* Mostrar seccionalizadores conectados */}
+              {connectedSectionalizers.length > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  <strong>Seccionalizadores conectados:</strong>
+                  <ul>
+                    {connectedSectionalizers.map((s, idx) => (
+                      <li key={idx}>{renderSectionalizer(s)}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
           )}
         </Card.Text>
         <Button variant="danger" onClick={handleDelete}>
