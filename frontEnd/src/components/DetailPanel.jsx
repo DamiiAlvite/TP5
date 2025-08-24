@@ -1,6 +1,8 @@
 import React from "react";
 import { Card, Button } from "react-bootstrap";
 import { api } from "../services/api";
+import CenterEditForm from "./CenterEditForm";
+import SectionalizerEditForm from "./SectionalizerEditForm";
 
 function DetailPanel({ selectedItem, setSelectedItem }) {
   const [sourceDetail, setSourceDetail] = React.useState(null);
@@ -63,6 +65,7 @@ function DetailPanel({ selectedItem, setSelectedItem }) {
   }, [selectedItem, contentTypeIds]);
   const [connectedCenters, setConnectedCenters] = React.useState([]);
   const [connectedSectionalizers, setConnectedSectionalizers] = React.useState([]);
+  const [showEdit, setShowEdit] = React.useState(false);
 
   React.useEffect(() => {
     // Si los centros conectados son IDs, obtener los datos completos
@@ -93,6 +96,14 @@ function DetailPanel({ selectedItem, setSelectedItem }) {
   if (!selectedItem) {
     return <p>Selecciona un elemento para ver sus detalles.</p>;
   }
+
+  // Renderizado de formularios de edición
+  const handleEditClick = () => setShowEdit(true);
+  const handleEditClose = () => setShowEdit(false);
+  const handleEditSave = (updatedItem) => {
+    setSelectedItem(updatedItem);
+    setShowEdit(false);
+  };
 
   const handleDelete = async () => {
     if ("cod" in selectedItem) {
@@ -127,72 +138,97 @@ function DetailPanel({ selectedItem, setSelectedItem }) {
   // Renderizado especial para seccionalizador
   const isSectionalizer = !('cod' in selectedItem);
   return (
-    <Card>
-      <Card.Body>
-        <Card.Title>
-          {isSectionalizer
-            ? `Seccionalizador ${selectedItem.prefix} ${selectedItem.num}`
-            : `${selectedItem.prefix || "CT"} ${selectedItem.cod}`}
-        </Card.Title>
-        <Card.Text>
-          {isSectionalizer ? (
-            <>
-              <div>
-                <strong>Ubicación:</strong> {selectedItem.location}
-              </div>
-              <div>
-                <strong>Fuente:</strong> {sourceDetail ? `${sourceDetail.prefix} ${sourceDetail.num || sourceDetail.cod}` : "Sin fuente"}
-              </div>
-              <div>
-                <strong>Destino:</strong> {destinationDetail ? `${destinationDetail.prefix} ${destinationDetail.num || destinationDetail.cod}` : "Sin destino"}
-              </div>
-            </>
-          ) : (
-            // ...existing code...
-            <>
-              {camposMostrar
-                .filter(c => selectedItem[c.key] !== undefined)
-                .map(c => (
-                  <div key={c.key}>
-                    <strong>{c.label}:</strong> {String(selectedItem[c.key])}
+    <>
+      <Card>
+        <Card.Body>
+          <Card.Title>
+            {isSectionalizer
+              ? `Seccionalizador ${selectedItem.prefix} ${selectedItem.num}`
+              : `${selectedItem.prefix || "CT"} ${selectedItem.cod}`}
+          </Card.Title>
+          <Card.Text>
+            {isSectionalizer ? (
+              <>
+                <div>
+                  <strong>Ubicación:</strong> {selectedItem.location}
+                </div>
+                <div>
+                  <strong>Fuente:</strong> {sourceDetail ? `${sourceDetail.prefix} ${sourceDetail.num || sourceDetail.cod}` : "Sin fuente"}
+                </div>
+                <div>
+                  <strong>Destino:</strong> {destinationDetail ? `${destinationDetail.prefix} ${destinationDetail.num || destinationDetail.cod}` : "Sin destino"}
+                </div>
+              </>
+            ) : (
+              // ...existing code...
+              <>
+                {camposMostrar
+                  .filter(c => selectedItem[c.key] !== undefined)
+                  .map(c => (
+                    <div key={c.key}>
+                      <strong>{c.label}:</strong> {String(selectedItem[c.key])}
+                    </div>
+                  ))}
+                <div>
+                  <strong>Fuente:</strong> {sourceDetail ? `${sourceDetail.prefix} ${sourceDetail.num || sourceDetail.cod}` : "Sin fuente"}
+                </div>
+                <div>
+                  <strong>Destino:</strong> {destinationDetail ? `${destinationDetail.prefix ? destinationDetail.prefix + " " : ""}${destinationDetail.num || destinationDetail.cod}` : "Sin destino"}
+                </div>
+                {/* Mostrar centros conectados */}
+                {connectedCenters.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <strong>Centros conectados:</strong>
+                    <ul>
+                      {connectedCenters.map((c, idx) => (
+                        <li key={idx}>{renderCenter(c)}</li>
+                      ))}
+                    </ul>
                   </div>
-                ))}
-              <div>
-                <strong>Fuente:</strong> {sourceDetail ? `${sourceDetail.prefix} ${sourceDetail.num || sourceDetail.cod}` : "Sin fuente"}
-              </div>
-              <div>
-                <strong>Destino:</strong> {destinationDetail ? `${destinationDetail.prefix ? destinationDetail.prefix + " " : ""}${destinationDetail.num || destinationDetail.cod}` : "Sin destino"}
-              </div>
-              {/* Mostrar centros conectados */}
-              {connectedCenters.length > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <strong>Centros conectados:</strong>
-                  <ul>
-                    {connectedCenters.map((c, idx) => (
-                      <li key={idx}>{renderCenter(c)}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {/* Mostrar seccionalizadores conectados */}
-              {connectedSectionalizers.length > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <strong>Seccionalizadores conectados:</strong>
-                  <ul>
-                    {connectedSectionalizers.map((s, idx) => (
-                      <li key={idx}>{renderSectionalizer(s)}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </>
-          )}
-        </Card.Text>
-        <Button variant="danger" onClick={handleDelete}>
-          Eliminar
-        </Button>
-      </Card.Body>
-    </Card>
+                )}
+                {/* Mostrar seccionalizadores conectados */}
+                {connectedSectionalizers.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <strong>Seccionalizadores conectados:</strong>
+                    <ul>
+                      {connectedSectionalizers.map((s, idx) => (
+                        <li key={idx}>{renderSectionalizer(s)}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            )}
+          </Card.Text>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Button variant="primary" onClick={handleEditClick}>
+              Editar
+            </Button>
+            <Button variant="danger" onClick={handleDelete}>
+              Eliminar
+            </Button>
+          </div>
+        </Card.Body>
+      </Card>
+      {/* Modal de edición */}
+      {showEdit && (
+        isSectionalizer ? (
+          <SectionalizerEditForm
+            show={showEdit}
+            handleClose={handleEditClose}
+            item={selectedItem}
+            onSave={handleEditSave}
+          />
+        ) : (
+          <CenterEditForm
+            show={showEdit}
+            handleClose={handleEditClose}
+            item={selectedItem}
+            onSave={handleEditSave}
+          />
+        )
+      )}
+    </>
   );
 }
 
