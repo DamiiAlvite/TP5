@@ -169,12 +169,6 @@ function DetailPanel({ selectedItem, setSelectedItem }) {
                       <strong>{c.label}:</strong> {String(selectedItem[c.key])}
                     </div>
                   ))}
-                <div>
-                  <strong>Fuente:</strong> {sourceDetail ? `${sourceDetail.prefix} ${sourceDetail.num || sourceDetail.cod}` : "Sin fuente"}
-                </div>
-                <div>
-                  <strong>Destino:</strong> {destinationDetail ? `${destinationDetail.prefix ? destinationDetail.prefix + " " : ""}${destinationDetail.num || destinationDetail.cod}` : "Sin destino"}
-                </div>
                 {/* Mostrar centros conectados */}
                 {connectedCenters.length > 0 && (
                   <div style={{ marginTop: 10 }}>

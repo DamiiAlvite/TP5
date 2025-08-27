@@ -132,22 +132,7 @@ function SectionalizerEditForm({ show, handleClose, item, onSave }) {
               ))}
             </Form.Select>
           </Form.Group>
-          <Form.Group>
-            <Form.Label>Centros conectados</Form.Label>
-            <Form.Select name="connected_centers" multiple value={form.connected_centers} onChange={handleSelectChange}>
-              {centers.map(c => (
-                <option key={c.id} value={c.id}>{c.cod} - {c.name}</option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-          <Form.Group>
-            <Form.Label>Seccionalizadores conectados</Form.Label>
-            <Form.Select name="connected_sectionalizers" multiple value={form.connected_sectionalizers} onChange={handleSelectChange}>
-              {sectionalizers.map(s => (
-                <option key={s.id} value={s.id}>{s.prefix} {s.num}</option>
-              ))}
-            </Form.Select>
-          </Form.Group>
+          
         </Form>
       </Modal.Body>
       <Modal.Footer>
