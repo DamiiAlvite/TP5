@@ -1,0 +1,40 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: tp5_db
+      POSTGRES_USER: tp5_user
+      POSTGRES_PASSWORD: tp5_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backEnd
+    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 1
+    volumes:
+      - ./backEnd:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DB_NAME: tp5_db
+      DB_USER: tp5_user
+      DB_PASSWORD: tp5_pass
+      DB_HOST: db
+      DB_PORT: 5432
+
+  frontend:
+    build: ./frontEnd
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
